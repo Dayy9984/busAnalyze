@@ -1,4 +1,4 @@
-#sig_code.csv, emd_cod.csv, 행정구역별_위경도_좌표.csv, sgg.gpkg, umd.gpkg 파일 db로 변경
+#sig_code.csv, emd_cod.csv, 행정구역별_위경도_좌표.csv, sgg.gpkg, umd.gpkg 파일 db에 table create 후 insert
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.types import Text
