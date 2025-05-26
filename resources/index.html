@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <!-- 네이버 지도 API 스크립트-->
+  <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=sca4nj1yy8"></script>
+  
+  <style>
+    /* 페이지가 브라우저 전체를 채우도록 설정 */
+    body, html { height: 100%; margin: 0; }
+
+    /* 지도 스타일 
+      -z-index: 1 => 다른 UI (검색창, 토글 등)보다 아래에 깔기 
+    */
+    #map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #e0e0e0; /* 임시 회색 지도 영역, 지도 넣어서 의미없어짐 */
+      z-index: 1;
+    }
+    /* 
+      지도 위에 떠 있는 검색창 스타일
+      - z-index: 10으로 지도 위에 보이게
+      - display: flex로 내부 요소(입력창, 셀렉트, 버튼) 가로 배치
+    */
+    .top-center {
+      position: absolute;
+      top: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: rgba(255,255,255,0.95);
+      padding: 8px 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    /* 검색창 입력란 스타일 */
+    .top-center input[type="text"] {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 15px;
+      width: 550px;
+      box-sizing: border-box;
+    }
+    /* 등급 선택 스타일 */
+    .top-center select {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 15px;
+      width: 230px;
+      box-sizing: border-box;
+    }
+    /* 검색 버튼 스타일 */
+    .top-center button {
+      padding: 6px 24px;
+      border: none;
+      border-radius: 5px;
+      background: #3498db;
+      color: #fff;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    /* 
+      지도 위에 떠 있는 모델 전환 토글 컨테이너
+      - position: absolute, top/right로 화면 우측 상단에 배치
+      - z-index: 10으로 지도 위에 보이게 함
+    */
+    .model-toggle-container {
+      position: absolute;
+      top: 32px;
+      right: 48px;
+      z-index: 10;
+    }
+    /* 
+      모델 전환 토글(타원형)
+      - 배경, 보더, 그림자, flex 등으로 토글 버튼 UI 연출
+      - border-color는 선택된 모델에 따라 동적으로 변경
+    */
+    .model-toggle {
+      width: 180px;
+      height: 40px;
+      background: #f0f0f0;
+      border-radius: 28px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      cursor: pointer;
+      user-select: none;
+      border: 4px solid #3498db; /* 기본 파란색(사각지대) */
+      transition: border-color 0.3s;
+    }
+    /* 토글 상태를 저장하는 체크박스 숨기기 */
+    .model-toggle input {
+      display: none;
+    }
+    /* 
+      토글 슬라이더(파란색/주황색으로 이동)
+      - position: absolute로 토글 내부에서 이동
+      - 체크 상태에 따라 left와 background가 변경됨
+    */
+    .toggle-slider {
+      position: absolute;
+      top: 5px;
+      left: 6px;
+      width: 78px;
+      height: 30px;
+      background: #3498db;
+      border-radius: 20px;
+      transition: left 0.3s, background 0.3s;
+      z-index: 1;
+    }
+    /* 토글이 체크되면(입지분석 선택) 슬라이더가 오른쪽으로 이동하고 색도 주황색으로 변경 */
+    .model-toggle input:checked + .toggle-slider {
+      left: 96px;
+      background: #e67e22;
+    }
+    /* 토글이 체크되면 테두리도 주황색으로 변경 */
+    .model-toggle:has(input:checked) {
+      border-color: #e67e22;
+    }
+    /* 
+      토글 내부 라벨(텍스트) 스타일
+      - 가독성 위해 체크된 모델이름이 볼드+하얀색으로 변경
+    */
+    .toggle-labels {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      z-index: 2;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -1px;
+    }
+    .toggle-label {
+      width: 50%;
+      text-align: center;
+      color: #888;
+      transition: color 0.3s;
+      line-height: 48px;
+    }
+    .model-toggle input:not(:checked) ~ .toggle-labels .left {
+      color: #fff;
+      font-weight: bold;
+    }
+    .model-toggle input:checked ~ .toggle-labels .right {
+      color: #fff;
+      font-weight: bold;
+    }
+
+    /* 
+      등급표(범례) 스타일
+      - position: absolute로 지도 우측에 고정
+      - 각 등급별로 색상 사각형과 텍스트를 나란히 표시
+    */
+    .right-legend {
+      position: absolute;
+      top: 110px;
+      right: 32px;
+      z-index: 10;
+      background: rgba(255,255,255,0.9);
+      padding: 16px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      font-size: 15px;
+      min-width: 90px;
+    }
+    /* 색상 사각형과 등급 중앙정렬 */
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .legend-color {
+      width: 16px; height: 16px; border-radius: 3px; margin-right: 8px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <!-- 지도 -->
+  <div id="map"></div>
+  <!-- 분리한 JS 파일을 아래에서 불러옴 -->
+  <script src="naver_map.js"></script>
+
+  <!-- 검색창, 등급선택 -->
+  <div class="top-center">
+    <input type="text" placeholder="지역구 입력">
+    <select>
+      <option value="">등급 전체</option>
+      <option value="1">1등급</option>
+      <option value="2">2등급</option>
+      <option value="3">3등급</option>
+      <option value="4">4등급</option>
+      <option value="5">5등급</option>
+    </select>
+    <button>검색</button>
+  </div>
+
+  <!-- 모델 전환 UI -->
+  <div class="model-toggle-container">
+    <label class="model-toggle">
+      <input type="checkbox" id="modelSwitch">
+      <span class="toggle-slider"></span>
+      <span class="toggle-labels">
+        <span class="toggle-label left">사각지대</span>
+        <span class="toggle-label right">입지분석</span>
+      </span>
+    </label>
+  </div>
+
+  <!-- 등급표(범례) -->
+  <div class="right-legend">
+    <div class="legend-item"><span class="legend-color" style="background:#2ecc71"></span>1등급</div>
+    <div class="legend-item"><span class="legend-color" style="background:#a3ba4a"></span>2등급</div>
+    <div class="legend-item"><span class="legend-color" style="background:#f1c40f"></span>3등급</div>
+    <div class="legend-item"><span class="legend-color" style="background:#f39c12"></span>4등급</div>
+    <div class="legend-item"><span class="legend-color" style="background:#e74c3c"></span>5등급</div>
+  </div>
+
+  <!-- 네이버 지도 스크립트 => 반드시 body 맨 아래에 위치해야 #map div가 생성된 후 실행됨 -->
+  <script>
+    // 네이버 지도 객체를 생성하고 #map div에 렌더링
+    var map = new naver.maps.Map('map', {
+      center: new naver.maps.LatLng(35.1796, 129.0756), // 부산 중심 좌표
+      zoom: 12 // 초기 확대/축소 레벨
+    });
+  </script>
+</body>
+</html>
