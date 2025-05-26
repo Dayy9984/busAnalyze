@@ -17,7 +17,15 @@ class AddressParser:
         self.engine = self.db.get_db(self.DB_NAME)
 
     def parse(self, address: str) -> dict:
+        
+        
         parts = [p.strip() for p in address.strip().split() if p.strip()]
+        
+        city_aliases = ["부산", "부산시","부산광역시"]
+        for alias in city_aliases:    
+            if parts[0] == alias :        
+                parts.pop(0)        
+                break
 
         with self.engine as conn:
             gu_list = [r[0] for r in conn.execute(text("SELECT SIG_KOR_NM FROM SIG_CODE")).fetchall()]
