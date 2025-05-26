@@ -6,3 +6,5 @@ numpy
 sqlalchemy
 uvicorn
 fastapi
+geoalchemy2
+cryptography
