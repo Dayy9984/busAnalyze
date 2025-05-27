@@ -1,9 +1,9 @@
-# main.py
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from routers.sgg_emd import router as sgg_emd_router 
-from routers.smart_bus import router as smart_bus_router 
-from routers.bus_blind_spot import router as bus_blind_spot
+from routers.LocationBorder import router as LocationBorderRouter 
+from routers.SmartBus import router as SmartBusRouter 
+from routers.BusBlindSpot import router as BusBlindSpotRouter
+from routers.AutoComplete import router as AutoCompleteRouter
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
@@ -13,10 +13,11 @@ RESOURCES_DIR = os.path.join(BASE_DIR, "resources")
 
 app = FastAPI()
 
-app.include_router(sgg_emd_router)
-app.include_router(smart_bus_router)
-app.include_router(bus_blind_spot)
-# You can add a prefix here, e.g., app.include_router(test_router, prefix="/api")
+app.include_router(AutoCompleteRouter)
+app.include_router(LocationBorderRouter)
+app.include_router(SmartBusRouter)
+app.include_router(BusBlindSpotRouter)
+
 
 app.mount("/", StaticFiles(directory=RESOURCES_DIR, html=True), name="static")
 
