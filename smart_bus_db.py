@@ -11,7 +11,7 @@ df = pd.read_csv("smart_bus_station.csv")
 HOST     = "127.0.0.1"
 PORT     = 3306
 USER     = "root"
-PASSWORD = "600900"
+PASSWORD = "2204"
 DB_NAME  = "bus_db"
 
 db_connection = create_engine(

@@ -9,7 +9,7 @@ import pymysql
 # MySQL 연결 설정
 DB_NAME = "bus_db"
 DB_USER = "root"
-DB_PASSWORD = "1234"
+DB_PASSWORD = "2204"
 DB_HOST = "localhost"
 DB_PORT = 3306
 
