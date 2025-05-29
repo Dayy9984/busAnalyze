@@ -7,7 +7,7 @@ class dbmodule:
         self.HOST = "127.0.0.1"
         self.PORT = 3306
         self.USER = "root"
-        self.PASSWORD = "600900"
+        self.PASSWORD = "2204"
       
     
     def get_db(self,db_name):

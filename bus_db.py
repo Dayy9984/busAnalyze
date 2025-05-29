@@ -11,7 +11,7 @@ df = pd.read_csv("ranked_filtered_scaled_with_codes.csv")
 HOST     = "localhost"
 PORT     = 3306
 USER     = "root"
-PASSWORD = "1234"
+PASSWORD = "2204"
 DB_NAME  = "bus_db"
 
 db_connection = create_engine(
