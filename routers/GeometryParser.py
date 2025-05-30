@@ -1,4 +1,3 @@
-
 from shapely import wkt
 from shapely.geometry import MultiPolygon, Polygon
 from shapely.ops import transform
@@ -6,19 +5,22 @@ from pyproj import Transformer
 
 class GeometryParser:
     def __init__(self):
-        self.transformer = Transformer.from_crs("EPSG:5179", "EPSG:4326", always_xy=True)
+        self.transformer_5179 = Transformer.from_crs("EPSG:5179", "EPSG:4326", always_xy=True)
+        self.transformer_5181 = Transformer.from_crs("EPSG:5181", "EPSG:4326", always_xy=True)
+        self.transformer_5186 = Transformer.from_crs("EPSG:5186", "EPSG:4326", always_xy=True)
 
-    def parse_geometry_to_list(self,geometry: str)->list:
-        # 1. WKT ¡æ Shapely °´Ã¼
+    def parse_geometry_to_list(self, geometry: str, level: str) -> list:
         polygon = wkt.loads(geometry)
-        # 2. ÁÂÇ¥°è º¯È¯
-        transformed_polygon = transform(self.transformer.transform, polygon)
-        # 3. Polygon/MultiPolygon Ã³¸®
-        if isinstance(transformed_polygon, MultiPolygon):
-            polygons = list(transformed_polygon.geoms)
+        # levelì— ë”°ë¼ ë³€í™˜ EPSGë¥¼ ì‹¤í—˜ì ìœ¼ë¡œ ë°”ê¿”ë³´ì„¸ìš”
+        if level == "ë™":
+            polygon = transform(self.transformer_5179.transform, polygon)
+        else:  # level == "êµ¬"
+            # EPSG:5186ë¡œ ë³€í™˜
+            polygon = transform(self.transformer_5186.transform, polygon)
+        if isinstance(polygon, MultiPolygon):
+            polygons = list(polygon.geoms)
         else:
-            polygons = [transformed_polygon]
-        # 4. [ {lat, lng}, ... ] ¹è¿­·Î º¯È¯
+            polygons = [polygon]
         result = []
         for poly in polygons:
             if isinstance(poly, Polygon):
