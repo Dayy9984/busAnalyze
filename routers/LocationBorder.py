@@ -1,5 +1,3 @@
-# routers/LocationBorder.py
-
 from fastapi import APIRouter, HTTPException
 from routers.LocationFetcher import LocationFetcher
 from routers.AddressParser import AddressParser
@@ -16,13 +14,13 @@ def selected_coordinates(address: str):
     try:
         result = parser.parse(address)
         loc = fetcher.get(result["level"], result["code"])
-        multi_poly = geoparser.parse_geometry_to_list(loc["geometry"])
+        # level(동/구)을 넘겨서 좌표계 변환 분기
+        multi_poly = geoparser.parse_geometry_to_list(loc["geometry"], result["level"])
     except HTTPException:
         raise
     except Exception:
         raise HTTPException(status_code=500, detail="서버 내부 오류가 발생했습니다.")
 
-    # 중심좌표 [경도, 위도] → [위도, 경도]로 변환 (필요시)
     coordinates = loc["coordinates"]
     if coordinates and len(coordinates) == 2:
         coordinates = [coordinates[1], coordinates[0]]
@@ -41,7 +39,7 @@ def naver_polygon(address: str):
     try:
         result = parser.parse(address)
         loc = fetcher.get(result["level"], result["code"])
-        return geoparser.parse_geometry_to_list(loc["geometry"])
+        return geoparser.parse_geometry_to_list(loc["geometry"], result["level"])
     except HTTPException:
         raise
     except Exception:
