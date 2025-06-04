@@ -237,5 +237,13 @@ function visualizeSmartBus(data) {
             }
             marker._infowindow = infoWindow;
         });
+
+        naver.maps.Event.addListener(map, "click", function() {
+            smartBusMarkers.forEach(m => {
+            if (m._infowindow && m._infowindow.getMap()) {
+                m._infowindow.close();
+            }
+        });
     });
+});
 }
